@@ -14,6 +14,9 @@ To install this package, use `sudo apt install ros-foxy-xacro ros-foxy-joint-sta
 ## Understanding the Whole Picture
 Xacro is a macro language that simplifies the creation of URDF files. The robot_state_publisher expects joint values published on the `/joint_states` topic. For initial tests, the `joint_state_publisher_gui` can be used to provide fake values.
 
+![alt text](https://articulatedrobotics.xyz/assets/images/rsp-2afa5bef6c72583be919186c08605d9f.png)
+
+
 ### Popular URDF Tags
 - `<robot>`: Root element encapsulating the entire robot description.
 - `<link>`: Defines rigid bodies or links in the robot.
@@ -26,6 +29,7 @@ Xacro is a macro language that simplifies the creation of URDF files. The robot_
 - `<material>`, `<uri>`, `<geometry>`, `<joint_limit>`: Define material, resources, geometry, and joint limits respectively.
 
 ## Creating Robot Core
+
 ```xml
 <material name="white">
    <color rgba="1 1 1 1"/>
@@ -61,7 +65,7 @@ Xacro is a macro language that simplifies the creation of URDF files. The robot_
    </visual>
 </link>
 
-# Right Wheel Configuration
+## Right Wheel Configuration
 
 ```xml
 <joint name="right_wheel_joint" type="continuous">
