@@ -14,7 +14,7 @@ To install this package, use `sudo apt install ros-foxy-xacro ros-foxy-joint-sta
 ## Understanding the Whole Picture
 Xacro is a macro language that simplifies the creation of URDF files. The robot_state_publisher expects joint values published on the `/joint_states` topic. For initial tests, the `joint_state_publisher_gui` can be used to provide fake values.
 
-![alt text](https://articulatedrobotics.xyz/assets/images/rsp-2afa5bef6c72583be919186c08605d9f.png)
+![alt text](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*aagM-_T_Pt5Jw16H9TYF-A.png)
 
 
 ### Popular URDF Tags
@@ -28,59 +28,77 @@ Xacro is a macro language that simplifies the creation of URDF files. The robot_
 - `<inertial>`: Defines inertial properties.
 - `<material>`, `<uri>`, `<geometry>`, `<joint_limit>`: Define material, resources, geometry, and joint limits respectively.
 
-## Creating Robot Core
+## Creating robot_Core_xacro
 
-```xml
+```
 <material name="white">
    <color rgba="1 1 1 1"/>
 </material>
-<!-- Other material definitions -->
 
+<material name="orange">
+   <color rgba="1 0.3 0.1 1"/>
+</material>
+
+<material name="blue">
+   <color rgba="0.2 0.2 1 1"/>
+</material>
+
+<material name="black">
+   <color rgba="0 0 0 1"/>
+</material>
+```
+
+## Creating Chassis joint and link
+
+```
 <joint name="chassis_joint" type="fixed">
-   <!-- Joint definition -->
+   <parent link="base_link"/>
+   <child link="chassis"/>
+   <origin xyz="-0.1 0 0"/>
 </joint>
 
 <link name="chassis">
-   <!-- Chassis link definition -->
-</link>
-
-# Wheel Configuration
-
-## Left Wheel
-
-```xml
-<joint name="left_wheel_joint" type="continuous">
-   <parent link="base_link"/>
-   <child link="left_wheel"/>
-   <origin xyz="0 0.175 0" rpy="-${pi/2} 0 0"/>
-   <axis xyz="0 0 1"/>
-</joint>
-
-<link name="left_wheel">
    <visual>
+       <origin xyz="0.15 0 0.075" rpy="0 0 0"/>
        <geometry>
-           <cylinder length="0.04" radius="0.05" />
+           <box size="0.3 0.3 0.15"/>
        </geometry>
-       <material name="blue"/>
+       <material name="white"/>
    </visual>
-</link>
+</link>   
 
-## Right Wheel Configuration
+```
+At this point we can run the launch point and then open rviz, how the robot actual looks like!
 
-```xml
-<joint name="right_wheel_joint" type="continuous">
-   <parent link="base_link"/>
-   <child link="right_wheel"/>
-   <origin xyz="0 -0.175 0" rpy="${pi/2} 0 0"/>
-   <axis xyz="0 0 -1"/>
-</joint>
+# Getting Started Guide
 
-<link name="right_wheel">
-   <visual>
-       <geometry>
-           <cylinder length="0.04" radius="0.05" />
-       </geometry>
-       <material name="blue"/>
-   </visual>
-</link>
+Welcome to our application! If you're a first-time user, here are some steps to get you started:
+
+## Note for First Time Users
+
+- **Change the Fixed Frame to "Base Link"**
+  - This ensures that your robot's base frame is correctly set up for visualization and transformation.
+
+- **Click on Show Name, Show Axis, and Show Arrows**
+  - These options enhance visualization by displaying names, axes, and arrows for better understanding of your robot's components.
+
+- **Enable TF**
+  - TF (Transform) enables the representation of coordinate frames and transformations between them. Make sure this is enabled for accurate visualization.
+
+- **Enable Visual**
+  - This option enables the visual representation of your robot, allowing you to see its structure and components.
+
+- **Set Description Topic as Robot Description**
+  - Specify the Description Topic as '/robot_description' to ensure that the correct robot model is loaded for visualization.
+
+
+
+
+
+
+
+
+
+
+
 
