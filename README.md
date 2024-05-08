@@ -6,7 +6,7 @@ This project focuses on building and simulating a differential-drive robot using
 
 ## Installation
 
-To run this project, ensure you have ROS Foxy installed. Use the following command to install necessary packages:
+To run this project, ensure you have ROS Foxy installed. Use the following command to install necessary packages
 
 To install this package, use `sudo apt install ros-foxy-xacro ros-foxy-joint-state-publisher-gui`.
 
