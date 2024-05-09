@@ -402,6 +402,226 @@ For a glimpse of the collision geometry, simply uncheck `Visual Enabled` and che
 
 
 
+# Running Gazebo
+
+Now that we’ve sketched out the basic design of our robot, it’s time to bring it to life in the Gazebo simulator. But first, we need to get Gazebo up and running.
+
+This is how you can install it.
+
+`sudo apt install ros-foxy-gazebo-ros-pkgs`
+
+## All about gazebo
+
+Gazebo, a freely available open-source robot simulation environment, is an essential tool for robotics research and development. Managed by Open Robotics, it operates independently from ROS (Robot Operating System) but seamlessly integrates with it. Gazebo enables users to build virtual environments and simulate robots with sensors and actuators, replicating real-world conditions. This capability streamlines algorithm testing and validation, eliminating the need for expensive and time-consuming hardware setups.
+
+# Getting Started Guide with Gazebo Simulation
+
+If you're working with Gazebo simulation in ROS 2, here's how to get started:
+
+## Step 1: Set `use_sim_time` to true
+
+When running nodes with Gazebo for synchronization, it's important to set `use_sim_time` to true. This ensures that ROS nodes use simulation time instead of wall-clock time.
+
+```bash
+ros2 launch my_bot rsp.launch.py use_sim_time:=true
+```
+## Step 1: Next up we need to run Gazebo, using the launch file provided by the `gazebo_ros` package.
+
+```bash
+ros2 launch gazebo_ros gazebo.launch.py
+```
+To spawn our robot, we can utilize the spawn script provided by gazebo_ros. Execute the following command to achieve this.
+
+```bash 
+ros2 run gazebo_ros spawn_entity.py -topic robot_description -entity robot_name
+
+```
+
+## LET’S CREATE ONE SINGLE LAUNCH FILE
+
+In your launch/ directory, create a new file named launch_sim.launch.py and copy the code block below into it. Be sure to replace the package name with the name of your package.
+
+```
+import os
+
+from ament_index_python.packages import get_package_share_directory
+
+
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
+from launch_ros.actions import Node
+
+
+
+def generate_launch_description():
+
+
+    # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
+    # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
+
+    package_name='my_bot' #<--- CHANGE ME
+
+    rsp = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory(package_name),'launch','rsp.launch.py'
+                )]), launch_arguments={'use_sim_time': 'true'}.items()
+    )
+
+    # Include the Gazebo launch file, provided by the gazebo_ros package
+    gazebo = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
+             )
+
+    # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
+    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
+                        arguments=['-topic', 'robot_description',
+                                   '-entity', 'my_bot'],
+                        output='screen')
+
+
+
+    # Launch them all!
+    return LaunchDescription([
+        rsp,
+        gazebo,
+        spawn_entity,
+    ])
+
+```
+
+## NOTE - 1
+
+- Includes a custom launch file `rsp.launch.py` from a specific package, likely related to the project.
+- Sets a parameter `use_sim_time` to true, indicating that simulated time should be used. This is often necessary for simulation environments like Gazebo.
+- Includes a Gazebo launch file from the `gazebo_ros` package, which likely sets up the Gazebo environment.
+- Runs the entity spawn node `gazebo_ros`, which could be responsible for spawning entities (like robots or objects) into the Gazebo simulation.
+
+
+## Adding Gazebo Tags
+
+We can enhance our Gazebo simulation by incorporating <gazebo> tags into our URDF file. Let’s proceed with that step now.
+
+For each link tag containing a visual element (which should encompass all except base_link), include a gazebo tag and embed a material tag within it. 
+
+### For Chassie
+
+```
+    <gazebo reference="chassis">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+```
+### For Left Wheel
+
+```
+    <gazebo reference="left_wheel">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+```
+
+### For Right Wheel
+
+```
+    <gazebo reference="right_wheel">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+```
+### For Caster Wheel
+
+```
+    <gazebo reference="left_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+```
+## Note - 2
+
+- **Use of ros2_control Library:** The project utilizes the `ros2_control` library for handling control code. This library provides a unified approach for controlling both simulated and real robots, reducing differences between them.
+
+- **Differential-Drive Control System:** Initially, the project employs a simpler differential-drive control system provided by Gazebo. This system enables control of linear speed (for forward/backward motion) and angular speed (for turning) of the robot.
+
+- **Command Velocity:** In ROS, the command velocity is communicated via the `/cmd_vel` topic. It utilizes the `Twist` message type, which comprises six numbers representing linear velocity in the x, y, and z axes, and angular velocity around each axis. However, for a differential-drive robot, only linear speed in the x-axis (for driving forward/backward) and angular speed in the z-axis (for turning) are relevant, while the other four numbers remain 0.
+
+Dead reckoning involves estimating the robot’s position by integrating its velocity over small time intervals. This method, known as odometry, is favored over true velocity since it provides a practical way to track the robot’s movement.
+
+
+![alt_text](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*HzuW5khesbqZooBiAaa4Ag.png)
+
+Movement in X and Z directions only
+
+![alt_text](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*n-4vwWYWFtJmtrmw-IXH0g.png)
+
+In this setup, the Gazebo robot is spawned directly from the /robot_description, and the joint states are published by the control plugin. Additionally, the plugin broadcasts a transform from a new frame named odom (similar to the world origin, representing the robot's initial position) to base_link, providing the current position estimate for the robot to other components.
+
+![alt_text](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*aagM-_T_Pt5Jw16H9TYF-A.png)
+
+## Adding — gazebo_control.xacro
+
+```
+robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <gazebo>
+        <plugin name='diff_drive' filename='libgazebo_ros_diff_drive.so'>
+    
+    
+            <!-- Wheel Information -->
+            <left_joint>left_wheel_joint</left_joint>
+            <right_joint>right_wheel_joint</right_joint>
+            <wheel_separation>0.35</wheel_separation>
+            <wheel_diameter>0.1</wheel_diameter>
+
+            <!-- Limits -->
+            <max_wheel_torque>200</max_wheel_torque>
+            <max_wheel_acceleration>10.0</max_wheel_acceleration>
+
+            <!-- Output -->
+            <odometry_frame>odom</odometry_frame>
+            <robot_base_frame>base_link</robot_base_frame>
+
+            <publish_odom>true</publish_odom>
+            <publish_odom_tf>true</publish_odom_tf>
+            <publish_wheel_tf>true</publish_wheel_tf>
+    
+    
+        </plugin>
+    </gazebo>
+
+</robot>
+
+```
+
+Now Relaunching the Gazebo
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+
+```
+
+See you Robot Jumping?
+
+## Add it your Caster Wheel
+
+```
+    <gazebo reference="caster_wheel">
+        <material>Gazebo/Black</material>
+        <mu1 value="0.001"/>
+        <mu2 value="0.001"/>
+    </gazebo> 
+```
+
+
+
+
+
+
+
+
+
 
 
 
